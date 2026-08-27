@@ -2,16 +2,17 @@
 
 ## Current state
 
-The tooling is set up and the **walking skeleton is done**: a Python server
-that serves a small page and a `/api/health` endpoint, wired together so the
-page can fetch from the server. There is no ordering yet.
+The **walking skeleton** and **customer ordering** are done. A customer can
+open the page, see a menu served by the Python server, add items to a cart,
+and place an order. Orders are stored in memory and given an order id. There
+is no staff view or QR code yet.
 
 ## Next steps (in order)
 
 1. ~~**Walking skeleton.**~~ Done — server serves a page and a `/api/health`
    endpoint that the page can fetch.
-2. **Customer ordering.** Build out the menu and ordering page — add items to
-   an order and submit it.
+2. ~~**Customer ordering.**~~ Done — see the menu, add items, place an order.
+   See SPECS/2026-08-27-customer-ordering/.
 3. **Staff tracking.** Build the staff view to see incoming orders and mark
    each one as being processed or done.
 4. **QR code.** Generate a QR code that opens the ordering page for a table.

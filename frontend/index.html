@@ -10,31 +10,61 @@
       max-width: 30rem;
       margin: 3rem auto;
       padding: 0 1rem;
+    }
+    h1 {
       text-align: center;
     }
     button {
-      font-size: 1.1rem;
-      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+      padding: 0.5rem 1rem;
       cursor: pointer;
     }
-    #result {
-      margin-top: 1rem;
+    #menu {
+      margin: 1rem 0;
+    }
+    .menu-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #ddd;
+      padding: 0.5rem 0;
+    }
+    #cart {
+      list-style: none;
+      padding: 0;
+    }
+    #result, #order-result {
       font-weight: bold;
     }
   </style>
 </head>
 <body>
   <h1>Cafe Ordering System</h1>
-  <p>Walking skeleton — check that the server is reachable.</p>
 
-  <button id="check">Check server</button>
-  <p id="result"></p>
+  <section>
+    <p>Walking skeleton — check that the server is reachable.</p>
+    <button id="check">Check server</button>
+    <p id="result"></p>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>Order</h2>
+    <div id="menu"><p>Loading menu...</p></div>
+
+    <h3>Your cart</h3>
+    <ul id="cart"></ul>
+    <button id="place-order">Place order</button>
+    <p id="order-result"></p>
+  </section>
 
   <script>
-    const button = document.getElementById("check");
+    // ----- Check server (from the walking skeleton) -----
+    const checkButton = document.getElementById("check");
     const result = document.getElementById("result");
 
-    button.addEventListener("click", async () => {
+    checkButton.addEventListener("click", async () => {
       result.textContent = "Checking...";
       try {
         const response = await fetch("/api/health");
@@ -44,6 +74,80 @@
         result.textContent = "Could not reach the server.";
       }
     });
+
+    // ----- Ordering -----
+    const cart = [];  // the customer's chosen items (in memory only)
+
+    const menuBox = document.getElementById("menu");
+    const cartList = document.getElementById("cart");
+    const placeOrderButton = document.getElementById("place-order");
+    const orderResult = document.getElementById("order-result");
+
+    function renderCart() {
+      cartList.innerHTML = "";
+      cart.forEach((name) => {
+        const li = document.createElement("li");
+        li.textContent = name;
+        cartList.appendChild(li);
+      });
+    }
+
+    async function loadMenu() {
+      menuBox.innerHTML = "<p>Loading menu...</p>";
+      try {
+        const response = await fetch("/api/menu");
+        const data = await response.json();
+        renderMenu(data.menu);
+      } catch (error) {
+        menuBox.innerHTML = "<p>Could not load the menu.</p>";
+      }
+    }
+
+    function renderMenu(items) {
+      menuBox.innerHTML = "";
+      items.forEach((item) => {
+        const row = document.createElement("div");
+        row.className = "menu-item";
+
+        const label = document.createElement("span");
+        label.textContent = item.name + " — £" + item.price.toFixed(2);
+
+        const addButton = document.createElement("button");
+        addButton.textContent = "Add";
+        addButton.addEventListener("click", () => {
+          cart.push(item.name);
+          renderCart();
+        });
+
+        row.appendChild(label);
+        row.appendChild(addButton);
+        menuBox.appendChild(row);
+      });
+    }
+
+    placeOrderButton.addEventListener("click", async () => {
+      orderResult.textContent = "Placing order...";
+      try {
+        const response = await fetch("/api/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ items: cart }),
+        });
+        const data = await response.json();
+        if (response.ok) {
+          orderResult.textContent =
+            "Order received. Your order number is " + data.order_id + ".";
+          cart.length = 0;
+          renderCart();
+        } else {
+          orderResult.textContent = "Order failed: " + (data.error || "unknown error");
+        }
+      } catch (error) {
+        orderResult.textContent = "Could not place the order.";
+      }
+    });
+
+    loadMenu();
   </script>
 </body>
 </html>
