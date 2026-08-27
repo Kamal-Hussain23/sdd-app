@@ -21,6 +21,8 @@ technology.
 - The customer adds items to a cart and places an order.
 - The server validates the order and stores it in memory, returning an order
   number.
+- Staff open a separate page (`/staff`) to see all orders and advance each one
+  through `received` → `preparing` → `done`.
 
 ## Set up and run
 
@@ -35,13 +37,16 @@ Then open the site at:
 - `http://localhost:3000/` (on this machine)
 - or the public Codio URL: `https://${CODIO_HOSTNAME}-3000.codio.io/`
 
-On the page you can:
+On the **customer page** (`/`) you can:
 - Click **Check server** to confirm the frontend can reach the backend.
 - Add items from the menu to your cart, then click **Place order** to send the
   order. The page shows your order number.
 
-(Orders live only in memory, so they reset when the server restarts. Staff
-tracking and QR codes come later.)
+Open the **staff page** (`/staff`) to see incoming orders and advance each
+order's status.
+
+(Orders live only in memory, so they reset when the server restarts. QR codes
+come later.)
 
 ## Where to find the constitution
 

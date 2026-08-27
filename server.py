@@ -21,6 +21,7 @@ LOGGER = logging.getLogger("cafe")
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
 FRONTEND_HTML = Path(__file__).parent / "frontend" / "index.html"
+STAFF_HTML = Path(__file__).parent / "frontend" / "staff.html"
 
 
 # ---------------------------------------------------------------------------
@@ -89,6 +90,44 @@ def place_order(items: list[str]) -> Order:
 
 
 # ---------------------------------------------------------------------------
+# Staff-tracking: status contract and operations
+# ---------------------------------------------------------------------------
+
+# The allowed lifecycle of an order. A new order starts as "received".
+VALID_STATUSES = ("received", "preparing", "done")
+
+
+class UnknownOrderError(Exception):
+    """Raised when an order id does not match a stored order."""
+
+
+class InvalidStatusError(Exception):
+    """Raised when a status is not one of the allowed statuses."""
+
+
+def get_orders() -> list[Order]:
+    """Return the in-memory orders, most recent first."""
+    return sorted(ORDERS, key=lambda order: order.order_id, reverse=True)
+
+
+def update_order_status(order_id: int, status: str) -> Order:
+    """Set an order's status and return it.
+
+    Raises UnknownOrderError if the order id is unknown, or
+    InvalidStatusError if the status is not part of the contract.
+    """
+    if status not in VALID_STATUSES:
+        raise InvalidStatusError(f"unknown status: {status}")
+
+    for order in ORDERS:
+        if order.order_id == order_id:
+            order.status = status
+            return order
+
+    raise UnknownOrderError(f"order not found: {order_id}")
+
+
+# ---------------------------------------------------------------------------
 # Logging decorator (kept separate from the request-handling logic)
 # ---------------------------------------------------------------------------
 
@@ -137,8 +176,12 @@ class CafeHandler(BaseHTTPRequestHandler):
             self._send_json({"status": "ok"})
         elif self.path == "/api/menu":
             self._send_menu()
+        elif self.path == "/api/orders":
+            self._send_orders()
         elif self.path in ("/", "/index.html"):
             self._send_html(FRONTEND_HTML)
+        elif self.path == "/staff":
+            self._send_html(STAFF_HTML)
         else:
             self._send_json({"error": "not found"}, status=404)
 
@@ -147,12 +190,53 @@ class CafeHandler(BaseHTTPRequestHandler):
         """Answer POST requests, e.g. placing an order."""
         if self.path == "/api/orders":
             self._place_order()
+        elif self.path.startswith("/api/orders/") and self.path.endswith("/status"):
+            self._update_order_status()
         else:
             self._send_json({"error": "not found"}, status=404)
 
     def _send_menu(self) -> None:
         """Send the in-memory menu as JSON."""
         self._send_json({"menu": [{"name": i.name, "price": i.price} for i in MENU]})
+
+    def _send_orders(self) -> None:
+        """Send all stored orders to the staff board."""
+        orders = [
+            {"order_id": o.order_id, "items": o.items, "status": o.status} for o in get_orders()
+        ]
+        self._send_json({"orders": orders})
+
+    def _update_order_status(self) -> None:
+        """Set an order's status from the request body and reply."""
+        order_id = self._order_id_from_status_path()
+        if order_id is None:
+            self._send_json({"error": "order not found"}, status=404)
+            return
+
+        body = self._read_json_body()
+        status = body.get("status") if body is not None else None
+        if body is None or not isinstance(status, str):
+            self._send_json({"error": "invalid status update"}, status=400)
+            return
+
+        try:
+            order = update_order_status(order_id, status)
+        except UnknownOrderError:
+            self._send_json({"error": "order not found"}, status=404)
+            return
+        except InvalidStatusError as error:
+            self._send_json({"error": str(error)}, status=400)
+            return
+
+        self._send_json({"order_id": order.order_id, "status": order.status})
+
+    def _order_id_from_status_path(self) -> int | None:
+        """Read the order id from a /api/orders/<id>/status path."""
+        middle = self.path[len("/api/orders/") : -len("/status")]
+        try:
+            return int(middle)
+        except ValueError:
+            return None
 
     def _place_order(self) -> None:
         """Read the order body, validate and store it, then reply."""
