@@ -9,16 +9,22 @@ technology.
 
 ## How it's built
 
-- **Backend:** a small Python web server. Orders and the menu live **in
-  memory** — there is no database and nothing is saved to disk.
+- **Backend:** a small Python web server built with only the Python standard
+  library. The menu and orders live **in memory** — there is no database and
+  nothing is saved to disk.
 - **Frontend:** plain HTML, CSS, and vanilla JavaScript (no React, no
   libraries).
 
+## What works now
+
+- A customer opens the page and sees the menu (served by the server).
+- The customer adds items to a cart and places an order.
+- The server validates the order and stores it in memory, returning an order
+  number.
+
 ## Set up and run
 
-The backend is a plain Python server with no extra libraries to install.
-
-Run it from the project root:
+There are no libraries to install. Run it from the project root:
 
 ```bash
 python3 server.py
@@ -29,11 +35,13 @@ Then open the site at:
 - `http://localhost:3000/` (on this machine)
 - or the public Codio URL: `https://${CODIO_HOSTNAME}-3000.codio.io/`
 
-Click the **Check server** button to confirm the frontend can reach the
-backend's health endpoint.
+On the page you can:
+- Click **Check server** to confirm the frontend can reach the backend.
+- Add items from the menu to your cart, then click **Place order** to send the
+  order. The page shows your order number.
 
-(For now the app is just a walking skeleton: a health check plus the page that
-talks to it. Ordering comes next.)
+(Orders live only in memory, so they reset when the server restarts. Staff
+tracking and QR codes come later.)
 
 ## Where to find the constitution
 
