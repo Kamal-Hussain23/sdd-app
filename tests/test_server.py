@@ -15,6 +15,7 @@ import server
 OK = 200
 CREATED = 201
 BAD_REQUEST = 400
+NOT_FOUND = 404
 
 
 @pytest.fixture()
@@ -125,3 +126,77 @@ def test_place_order_non_list_items_rejected(server_url: str, clean_orders: None
     status, body = post_json(f"{server_url}/api/orders", {"items": "Latte"})
     assert status == BAD_REQUEST
     assert "error" in body
+
+
+# ---------------------------------------------------------------------------
+# Staff-tracking endpoint tests
+# ---------------------------------------------------------------------------
+
+
+def test_get_orders_endpoint_newest_first(server_url: str, clean_orders: None) -> None:
+    """GET /api/orders returns stored orders, most recent first."""
+    post_json(f"{server_url}/api/orders", {"items": ["Latte"]})
+    post_json(f"{server_url}/api/orders", {"items": ["Tea"]})
+    with urllib.request.urlopen(f"{server_url}/api/orders") as response:
+        assert response.status == OK
+        body = json.load(response)
+    orders_ids = [cast(int, o["order_id"]) for o in body["orders"]]
+    assert orders_ids == [2, 1]
+
+
+def test_update_status_endpoint_success(server_url: str, clean_orders: None) -> None:
+    """A valid status update returns 200 and the new status."""
+    post_json(f"{server_url}/api/orders", {"items": ["Latte"]})
+    status, body = post_json(f"{server_url}/api/orders/1/status", {"status": "preparing"})
+    assert status == OK
+    assert body == {"order_id": 1, "status": "preparing"}
+
+
+def test_update_status_unknown_id_returns_404(server_url: str, clean_orders: None) -> None:
+    """Updating a non-existent order returns 404 and changes nothing."""
+    status, body = post_json(f"{server_url}/api/orders/999/status", {"status": "preparing"})
+    assert status == NOT_FOUND
+    assert "error" in body
+
+
+def test_update_status_non_numeric_id_returns_404(server_url: str, clean_orders: None) -> None:
+    """A non-numeric id in the path returns 404."""
+    status, body = post_json(f"{server_url}/api/orders/abc/status", {"status": "preparing"})
+    assert status == NOT_FOUND
+    assert "error" in body
+
+
+def test_update_status_invalid_value_returns_400(server_url: str, clean_orders: None) -> None:
+    """An invalid status returns 400 and the order status is unchanged."""
+    post_json(f"{server_url}/api/orders", {"items": ["Latte"]})
+    status, body = post_json(f"{server_url}/api/orders/1/status", {"status": "flying"})
+    assert status == BAD_REQUEST
+    assert "error" in body
+    assert "unknown status" in str(body["error"])
+    assert server.ORDERS[0].status == "received"
+
+
+def test_update_status_missing_field_returns_400(server_url: str, clean_orders: None) -> None:
+    """A body without a 'status' field returns 400."""
+    status, body = post_json(f"{server_url}/api/orders/1/status", {"status": None})
+    assert status == BAD_REQUEST
+    assert "error" in body
+
+
+def test_staff_page_served(server_url: str) -> None:
+    """GET /staff returns the staff page."""
+    with urllib.request.urlopen(f"{server_url}/staff") as response:
+        assert response.status == OK
+        html = response.read().decode("utf-8")
+    assert "Staff" in html
+
+
+def test_get_orders_is_logged(server_url: str, caplog: pytest.LogCaptureFixture) -> None:
+    """The staff orders endpoint is logged by the decorator."""
+    with (
+        caplog.at_level(logging.INFO, logger=server.LOGGER.name),
+        urllib.request.urlopen(f"{server_url}/api/orders") as response,
+    ):
+        assert response.status == OK
+    messages = [r.getMessage() for r in caplog.records]
+    assert any("GET /api/orders" in m for m in messages)

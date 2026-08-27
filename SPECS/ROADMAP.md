@@ -2,10 +2,11 @@
 
 ## Current state
 
-The **walking skeleton** and **customer ordering** are done. A customer can
-open the page, see a menu served by the Python server, add items to a cart,
-and place an order. Orders are stored in memory and given an order id. There
-is no staff view or QR code yet.
+The **walking skeleton**, **customer ordering**, and **staff tracking** are
+done. A customer can see the menu, add items, and place an order. Staff can
+open a separate page (`/staff`) to see all orders and advance each one through
+`received` → `preparing` → `done`. All data is in memory and resets when the
+server restarts. There is no QR code yet.
 
 ## Next steps (in order)
 
@@ -13,8 +14,9 @@ is no staff view or QR code yet.
    endpoint that the page can fetch.
 2. ~~**Customer ordering.**~~ Done — see the menu, add items, place an order.
    See SPECS/2026-08-27-customer-ordering/.
-3. **Staff tracking.** Build the staff view to see incoming orders and mark
-   each one as being processed or done.
+3. ~~**Staff tracking.**~~ Done — a `/staff` page lists orders and let staff
+   advance each through `received` → `preparing` → `done`. See
+   SPECS/2026-08-27-staff-tracking/.
 4. **QR code.** Generate a QR code that opens the ordering page for a table.
 5. **Polish.** Nice styling and clearer messages.
 
