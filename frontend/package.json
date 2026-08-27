@@ -1,0 +1,9 @@
+{
+  "name": "sdd-app-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test script defined\" && exit 1",
+    "lint": "echo \"Error: no lint script defined\" && exit 1"
+  }
+}
