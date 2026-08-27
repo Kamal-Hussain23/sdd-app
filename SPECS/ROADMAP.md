@@ -2,15 +2,14 @@
 
 ## Current state
 
-The project is a blank slate. The tooling is set up (tests, style checks,
-type checking for Python, and a `frontend/` folder), but there is no app code
-yet.
+The tooling is set up and the **walking skeleton is done**: a Python server
+that serves a small page and a `/api/health` endpoint, wired together so the
+page can fetch from the server. There is no ordering yet.
 
 ## Next steps (in order)
 
-1. **Walking skeleton.** Get the thinnest working slice end-to-end: a customer
-   opens the menu page and places one order that appears somewhere. This proves
-   the whole setup works.
+1. ~~**Walking skeleton.**~~ Done — server serves a page and a `/api/health`
+   endpoint that the page can fetch.
 2. **Customer ordering.** Build out the menu and ordering page — add items to
    an order and submit it.
 3. **Staff tracking.** Build the staff view to see incoming orders and mark

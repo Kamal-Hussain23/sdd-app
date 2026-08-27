@@ -16,7 +16,24 @@ technology.
 
 ## Set up and run
 
-(TBD — coming soon with the first walking skeleton.)
+The backend is a plain Python server with no extra libraries to install.
+
+Run it from the project root:
+
+```bash
+python3 server.py
+```
+
+Then open the site at:
+
+- `http://localhost:3000/` (on this machine)
+- or the public Codio URL: `https://${CODIO_HOSTNAME}-3000.codio.io/`
+
+Click the **Check server** button to confirm the frontend can reach the
+backend's health endpoint.
+
+(For now the app is just a walking skeleton: a health check plus the page that
+talks to it. Ordering comes next.)
 
 ## Where to find the constitution
 
